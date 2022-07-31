@@ -13,7 +13,10 @@ import okhttp3.WebSocket;
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.binance.api.client.impl.BinanceApiServiceGenerator.getSharedClient;
 
 /**
  * Binance API WebSocket client implementation using OkHttp.
@@ -22,8 +25,8 @@ public class BinanceApiWebSocketClientImpl implements BinanceApiWebSocketClient,
 
     private final OkHttpClient client;
 
-    public BinanceApiWebSocketClientImpl(OkHttpClient client) {
-        this.client = client;
+    public BinanceApiWebSocketClientImpl() {
+        this.client = getSharedClient().newBuilder().pingInterval(3, TimeUnit.MINUTES).build();
     }
 
     @Override
@@ -93,7 +96,7 @@ public class BinanceApiWebSocketClientImpl implements BinanceApiWebSocketClient,
     }
 
     private Closeable createNewWebSocket(String channel, BinanceApiWebSocketListener<?> listener) {
-        String streamingUrl = String.format("%s/%s", BinanceApiConfig.useTestnetStreaming?BinanceApiConfig.getStreamTestNetBaseUrl():BinanceApiConfig.getStreamApiBaseUrl(), channel);
+        String streamingUrl = String.format("%s/%s", BinanceApiConfig.getStreamApiBaseUrl(), channel);
         Request request = new Request.Builder().url(streamingUrl).build();
         final WebSocket webSocket = client.newWebSocket(request, listener);
         return () -> {
